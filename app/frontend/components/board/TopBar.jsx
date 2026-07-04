@@ -21,14 +21,13 @@ export default function TopBar({
 
   return (
     <header className="relative z-50 flex h-[60px] flex-none items-center gap-[18px] border-b border-white/[0.07] bg-[#0A0F1A]/65 px-5 backdrop-blur-[8px]">
-      {/* brand */}
       <div className="flex items-center gap-2.5">
-        <div className="flex h-[30px] w-[30px] items-center justify-center rounded-[8px] bg-gradient-to-br from-[#FF9A2E] via-[#FF5C2A] to-[#FF3E3F] shadow-[0_4px_14px_rgba(255,92,42,0.35)]">
-          <div className="h-[9px] w-[13px] rounded-[2px] border-2 border-white" />
-        </div>
-        <span className="bg-gradient-to-br from-[#FFB24D] via-[#FF5C2A] to-[#FF3E3F] bg-clip-text text-[19px] font-extrabold tracking-[-0.02em] text-transparent">
-          tikit
-        </span>
+        <img
+          src="/brand/tikit_logo.webp"
+          alt="Tikit"
+          className="block h-[25px] w-auto"
+          style={{ filter: "drop-shadow(0 8px 22px rgba(255,92,42,0.35))" }}
+        />
       </div>
 
       <div className="h-[22px] w-px bg-white/10" />
@@ -50,7 +49,7 @@ export default function TopBar({
         className="rounded-[8px] px-2.5 py-1.5 text-[12.5px] font-semibold text-[#7E8AA3] hover:bg-white/[0.05] hover:text-[#EAEEF7]"
         title="Pull requests with no linked ticket"
       >
-        PRs
+        Pull Requests
         {unlinkedPrCount > 0 && (
           <span className="ml-1.5 rounded-full bg-[#FF9A2E]/20 px-[7px] py-px font-mono text-[11px] text-[#FF9A2E]">
             {unlinkedPrCount}
