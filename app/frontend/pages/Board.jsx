@@ -183,7 +183,7 @@ export default function Board(props) {
 
   return (
     <div className="tikit-bg flex h-screen w-full flex-col overflow-hidden">
-      <Head title={`${project.key} board`} />
+      <Head title={`${project.name} board`} />
 
       <TopBar
         project={project}

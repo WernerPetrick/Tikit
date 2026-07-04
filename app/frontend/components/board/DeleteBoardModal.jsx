@@ -22,6 +22,9 @@ export default function DeleteBoardModal({ open, project, ticketCount, onClose }
     if (!matches) return;
     setProcessing(true);
     router.delete(`/projects/${project.id}`, {
+      // The root redirect re-renders the same Board component, so its state
+      // (deleteBoardOpen) survives the visit — close the modal explicitly.
+      onSuccess: onClose,
       onFinish: () => setProcessing(false),
     });
   };

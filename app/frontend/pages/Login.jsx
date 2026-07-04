@@ -1,7 +1,5 @@
 import { Head, usePage } from "@inertiajs/react";
 
-// CSRF token from the layout meta tag, injected into native form POSTs (the
-// OmniAuth request phase leaves the SPA, so we submit a real form, not Inertia).
 function csrfToken() {
   return document.querySelector("meta[name=csrf-token]")?.content || "";
 }
@@ -35,17 +33,18 @@ export default function Login() {
       </div>
 
       <main className="relative z-[1] w-[420px] max-w-full" style={{ animation: "rise 0.5s ease both" }}>
-        {/* brand */}
-        <div className="mb-[30px] flex items-center gap-3.5">
+        <div className="mb-[30px] flex items-center gap-3.5 justify-center">
           <img
             src="/brand/tikit_logo.webp"
             alt="Tikit"
             className="block h-[50px] w-auto"
             style={{ filter: "drop-shadow(0 8px 22px rgba(255,92,42,0.35))" }}
           />
-          <span className="bg-gradient-to-br from-[#FFB24D] via-[#FF5C2A] to-[#FF3E3F] bg-clip-text text-[34px] font-extrabold tracking-[-0.02em] text-transparent">
-            tikit
-          </span>
+          <img
+            src="/brand/white_text_logo.webp"
+            alt="Tikit"
+            className="h-[30px] object-contain"
+          />
         </div>
 
         <div className="rounded-[18px] border border-white/[0.08] bg-[#0F1626]/[0.72] p-[30px_30px_26px] shadow-[0_30px_80px_rgba(0,0,0,0.5)] backdrop-blur-[10px]">
