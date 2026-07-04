@@ -1,9 +1,19 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { router } from "@inertiajs/react";
 
 export default function BoardSwitcher({ project, projects, onNewBoard, onDeleteBoard }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef(null);
   const current = projects.find((p) => p.id === project.id) || project;
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [open]);
 
   const switchTo = (p) => {
     setOpen(false);
@@ -22,7 +32,7 @@ export default function BoardSwitcher({ project, projects, onNewBoard, onDeleteB
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={ref}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -40,9 +50,7 @@ export default function BoardSwitcher({ project, projects, onNewBoard, onDeleteB
       </button>
 
       {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[280px] rounded-[12px] border border-white/[0.08] bg-[#0F1626] p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+        <div className="absolute left-0 top-[calc(100%+6px)] z-50 w-[280px] rounded-[12px] border border-white/[0.08] bg-[#0F1626] p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
             <div className="px-2.5 py-1.5 text-[10.5px] font-semibold uppercase tracking-wide text-[#6B7589]">
               Boards
             </div>
@@ -95,7 +103,6 @@ export default function BoardSwitcher({ project, projects, onNewBoard, onDeleteB
               <span className="text-[14px] leading-none">🗑</span> Delete this board
             </button>
           </div>
-        </>
       )}
     </div>
   );

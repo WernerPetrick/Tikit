@@ -1,5 +1,6 @@
-import { router, usePage } from "@inertiajs/react";
+import { usePage } from "@inertiajs/react";
 import { avatarColor, initials } from "../../lib/board";
+import { csrfToken } from "../../lib/csrf";
 import BoardSwitcher from "./BoardSwitcher";
 
 export default function TopBar({
@@ -17,7 +18,6 @@ export default function TopBar({
   onShowPullRequests,
 }) {
   const { currentUser } = usePage().props;
-  const signOut = () => router.delete("/logout");
 
   return (
     <header className="relative z-50 flex h-[60px] flex-none items-center gap-[18px] border-b border-white/[0.07] bg-[#0A0F1A]/65 px-5 backdrop-blur-[8px]">
@@ -93,7 +93,6 @@ export default function TopBar({
         <span className="pointer-events-none absolute right-3 text-[11px] text-[#7E8AA3]">▾</span>
       </div>
 
-      {/* create */}
       <button
         onClick={() => onCreate(null)}
         className="flex items-center gap-[7px] rounded-[9px] bg-gradient-to-br from-[#FF9A2E] via-[#FF5C2A] to-[#FF3E3F] px-[15px] py-[9px] text-[13.5px] font-bold text-white shadow-[0_4px_16px_rgba(255,92,42,0.32)] hover:brightness-105"
@@ -123,13 +122,17 @@ export default function TopBar({
               <div className="text-[12.5px] font-semibold">{currentUser.name}</div>
               <div className="font-mono text-[11px] text-[#7E8AA3]">@{currentUser.login}</div>
             </div>
-            <button
-              type="button"
-              onClick={signOut}
-              className="mt-1 w-full rounded-[7px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#C2CADB] hover:bg-[#FB5A5A]/[0.14] hover:text-[#FB5A5A]"
-            >
-              Sign out
-            </button>
+
+            <form method="post" action="/logout" className="mt-1">
+              <input type="hidden" name="_method" value="delete" />
+              <input type="hidden" name="authenticity_token" value={csrfToken()} />
+              <button
+                type="submit"
+                className="w-full rounded-[7px] px-2.5 py-2 text-left text-[12.5px] font-semibold text-[#C2CADB] hover:bg-[#FB5A5A]/[0.14] hover:text-[#FB5A5A]"
+              >
+                Sign out
+              </button>
+            </form>
           </div>
         </div>
       )}
