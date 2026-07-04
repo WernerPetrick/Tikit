@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+@plugin 'daisyui' {
+  themes: tikit --default --prefersdark;
+}
+
+/* Dark theme matching the Tikit Board design palette. */
+@plugin 'daisyui/theme' {
+  name: 'tikit';
+  default: true;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-base-100: #0f1626; /* modals / raised surfaces */
+  --color-base-200: #18223a; /* ticket cards */
+  --color-base-300: #1e2a47; /* card hover */
+  --color-base-content: #eaeef7;
+
+  --color-primary: #ff5c2a; /* brand orange */
+  --color-primary-content: #ffffff;
+  --color-secondary: #6366f1;
+  --color-secondary-content: #ffffff;
+  --color-accent: #ff9a2e;
+  --color-accent-content: #1a1206;
+  --color-neutral: #111a2e; /* column background */
+  --color-neutral-content: #c2cadb;
+
+  --color-info: #0ea5e9;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+  --color-error: #fb5a5a;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.625rem;
+  --radius-box: 0.875rem;
+
+  --border: 1px;
+}
+
+/* Brand fonts used by the design. */
+@theme {
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* The board's ambient gradient backdrop. */
+.tikit-bg {
+  background:
+    radial-gradient(1200px 600px at 85% -10%, rgba(255, 110, 52, 0.1), transparent 60%),
+    radial-gradient(900px 500px at 0% 110%, rgba(99, 102, 241, 0.08), transparent 55%),
+    #080d18;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+/* Stronger ambient backdrop for the login screen. */
+.tikit-login-bg {
+  background:
+    radial-gradient(1100px 560px at 82% -8%, rgba(255, 110, 52, 0.16), transparent 58%),
+    radial-gradient(900px 520px at 4% 108%, rgba(99, 102, 241, 0.1), transparent 55%),
+    #080d18;
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
+::-webkit-scrollbar-track { background: transparent; }
