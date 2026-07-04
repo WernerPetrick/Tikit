@@ -15,7 +15,9 @@ Rails.application.routes.draw do
   resources :projects, only: %i[create destroy]
   get "projects/:project_id/board", to: "boards#show", as: :board
 
-  resources :columns, only: %i[create destroy]
+  resources :columns, only: %i[create update destroy] do
+    collection { patch :reorder }
+  end
   resources :tickets, only: %i[create update] do
     member do
       patch :move
