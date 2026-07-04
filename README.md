@@ -207,27 +207,22 @@ For local dev, put these in `.env.local` (see `.env.example`). Never commit real
 Target platform: **Render**. The app has three infra pieces: a **web service** (Rails/
 Puma), a **background worker** (Solid Queue), and **PostgreSQL**.
 
-### ⚠️ Two things to get right before you deploy
+### Database & jobs (single Postgres)
 
-1. **Node must be available at build time.** `rails assets:precompile` runs the **Vite
-   build**, which needs Node + npm. Render's native **Ruby** runtime installs Node
-   automatically when a `package.json` is present, so the native path works. If you
-   deploy via the bundled `Dockerfile` instead, note it does **not** install Node as
-   generated — you'd need to add Node + `npm ci` + the Vite build to it. The native Ruby
-   runtime is the simpler path.
+Production uses **one** Postgres, connected via `DATABASE_URL` (`config/database.yml`).
+Solid Queue / Cache / Cable share that database — their tables are created by regular
+migrations (`db/migrate/*_create_solid_*`), so `bin/rails db:prepare` sets everything up
+and is safe to re-run on every deploy. There's no `TIKIT_DATABASE_PASSWORD` and no extra
+databases to provision.
 
-2. **Solid Queue/Cache/Cable database strategy.** `config/database.yml` (production)
-   defines four connections — `primary`, `cache`, `queue`, `cable`. On a single Render
-   Postgres you have two options:
-   - **Single database (simplest):** point all four at the same database (via
-     `DATABASE_URL`) so the Solid tables live alongside the app tables. Verify the four
-     `production:` entries resolve to the same connection; `bin/rails db:prepare` then
-     loads every schema into that one database.
-   - **Separate databases:** provision additional databases and set each connection's URL
-     (`QUEUE_DATABASE_URL`, `CACHE_DATABASE_URL`, `CABLE_DATABASE_URL`). More moving parts;
-     only worth it at scale.
+### ⚠️ One thing to get right before you deploy
 
-   For a small team, prefer the single-database option.
+**Node must be available at build time.** `rails assets:precompile` runs the **Vite
+build**, which needs Node + npm. Render's native **Ruby** runtime installs Node
+automatically when a `package.json` is present, so the native path works. If you deploy
+via the bundled `Dockerfile` instead, note it does **not** install Node as generated —
+you'd need to add Node + `npm ci` + the Vite build to it. The native Ruby runtime is the
+simpler path.
 
 ### Render setup (native Ruby runtime)
 
@@ -318,8 +313,8 @@ services:
         sync: false
 ```
 
-> Treat this blueprint as a starting point — reconcile the Solid database strategy
-> (above) and confirm plan sizes for your account before relying on it.
+> Treat this blueprint as a starting point — confirm plan sizes and region for your
+> account before relying on it.
 
 ---
 
