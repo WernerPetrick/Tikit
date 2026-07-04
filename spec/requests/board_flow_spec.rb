@@ -86,5 +86,21 @@ RSpec.describe "Board flow", type: :request do
       expect { delete "/columns/#{review.id}" }.not_to change(Column, :count)
       expect(flash[:alert]).to be_present
     end
+
+    it "renames a column" do
+      patch "/columns/#{todo.id}", params: { name: "Up Next" }
+      expect(todo.reload.name).to eq("Up Next")
+      expect(response).to redirect_to(board_path(project))
+    end
+
+    it "reorders columns by renumbering positions from the given order" do
+      # todo=pos1, doing=pos2 → swap them
+      patch "/columns/reorder", params: { project_id: project.id, ordered_ids: [doing.id, todo.id] }
+
+      expect(doing.reload.position).to eq(1)
+      expect(todo.reload.position).to eq(2)
+      # tickets are untouched — they belong to their column
+      expect(response).to redirect_to(board_path(project))
+    end
   end
 end

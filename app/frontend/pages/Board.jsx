@@ -8,7 +8,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove } from "@dnd-kit/sortable";
+import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 import TopBar from "../components/board/TopBar";
 import ColumnView from "../components/board/ColumnView";
 import TicketModal from "../components/board/TicketModal";
@@ -22,6 +22,10 @@ import { TicketCardView } from "../components/board/TicketCard";
 import { ARCHIVE_REASON_LABELS } from "../lib/board";
 
 const isColId = (id) => typeof id === "string" && id.startsWith("col-");
+const isColumnSortId = (id) => typeof id === "string" && id.startsWith("column-");
+// Both a column's droppable ("col-5") and its sortable ("column-5") mean "the
+// column as a whole" — a ticket dropped on either appends to that column's end.
+const isColumnContainer = (id) => isColId(id) || isColumnSortId(id);
 
 export default function Board(props) {
   const {
@@ -42,6 +46,7 @@ export default function Board(props) {
   const dndEnabled = filterUser === "all";
 
   const [activeId, setActiveId] = useState(null);
+  const [activeType, setActiveType] = useState(null); // "ticket" | "column"
   const [ticketModal, setTicketModal] = useState({ open: false, ticket: null, columnId: null });
   const [archiveModal, setArchiveModal] = useState({ open: false, ticket: null });
   const [archiveOpen, setArchiveOpen] = useState(false);
@@ -72,19 +77,26 @@ export default function Board(props) {
 
   const defaultColumnId = columns[0]?.id ?? null;
 
-  // ---- container lookup ----
+  // ---- container lookup ---- (resolves any drag target to its column id)
   const findContainer = (id) => {
     if (id == null) return null;
-    if (isColId(id)) return Number(id.slice(4));
+    if (isColId(id)) return Number(id.slice(4)); // "col-5" droppable
+    if (isColumnSortId(id)) return Number(id.slice(7)); // "column-5" sortable
     if (id === "archive") return null;
     const col = columns.find((c) => c.tickets.some((t) => String(t.id) === String(id)));
     return col ? col.id : null;
   };
 
   // ---- drag handlers ----
-  const handleDragStart = ({ active }) => setActiveId(active.id);
+  const handleDragStart = ({ active }) => {
+    setActiveId(active.id);
+    setActiveType(active.data.current?.type ?? "ticket");
+  };
 
   const handleDragOver = ({ active, over }) => {
+    // Column reordering is a single horizontal list — dnd-kit animates it and we
+    // commit on drop, so no live cross-container juggling is needed here.
+    if (activeType === "column") return;
     if (!over || over.id === "archive") return;
     const from = findContainer(active.id);
     const to = findContainer(over.id);
@@ -96,7 +108,7 @@ export default function Board(props) {
       const moving = fromCol?.tickets.find((t) => String(t.id) === String(active.id));
       if (!moving) return prev;
 
-      const overIndex = isColId(over.id)
+      const overIndex = isColumnContainer(over.id)
         ? toCol.tickets.length
         : toCol.tickets.findIndex((t) => String(t.id) === String(over.id));
       const insertAt = overIndex < 0 ? toCol.tickets.length : overIndex;
@@ -117,10 +129,28 @@ export default function Board(props) {
 
   const handleDragEnd = ({ active, over }) => {
     const id = active.id;
+    const type = activeType;
     setActiveId(null);
+    setActiveType(null);
     if (!over) return;
 
-    // Dropped on the archive zone → revert optimistic move, open reason modal.
+    // ---- column reorder ----
+    if (type === "column") {
+      const from = findContainer(id);
+      const to = findContainer(over.id);
+      if (from == null || to == null || from === to) return;
+      setColumns((prev) => {
+        const oldIndex = prev.findIndex((c) => c.id === from);
+        const newIndex = prev.findIndex((c) => c.id === to);
+        if (oldIndex < 0 || newIndex < 0) return prev;
+        const next = arrayMove(prev, oldIndex, newIndex);
+        persistColumnOrder(next.map((c) => c.id));
+        return next;
+      });
+      return;
+    }
+
+    // ---- ticket dropped on the archive zone → revert optimistic move, open modal ----
     if (over.id === "archive") {
       const ticket = columns.flatMap((c) => c.tickets).find((t) => String(t.id) === String(id));
       setColumns(props.columns);
@@ -128,6 +158,7 @@ export default function Board(props) {
       return;
     }
 
+    // ---- ticket move / reorder ----
     const to = findContainer(over.id);
     if (to == null) return;
 
@@ -135,7 +166,7 @@ export default function Board(props) {
       const toCol = prev.find((c) => c.id === to);
       if (!toCol) return prev;
       const oldIndex = toCol.tickets.findIndex((t) => String(t.id) === String(id));
-      let newIndex = isColId(over.id)
+      let newIndex = isColumnContainer(over.id)
         ? toCol.tickets.length - 1
         : toCol.tickets.findIndex((t) => String(t.id) === String(over.id));
       if (newIndex < 0) newIndex = toCol.tickets.length - 1;
@@ -150,6 +181,14 @@ export default function Board(props) {
     router.patch(
       `/tickets/${ticketId}/move`,
       { column_id: columnId, ordered_ids: orderedIds },
+      { preserveScroll: true, preserveState: true },
+    );
+  };
+
+  const persistColumnOrder = (orderedIds) => {
+    router.patch(
+      "/columns/reorder",
+      { project_id: project.id, ordered_ids: orderedIds },
       { preserveScroll: true, preserveState: true },
     );
   };
@@ -206,19 +245,27 @@ export default function Board(props) {
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
-        onDragCancel={() => setActiveId(null)}
+        onDragCancel={() => {
+          setActiveId(null);
+          setActiveType(null);
+        }}
       >
         <main className="flex min-h-0 flex-1 items-start gap-3.5 overflow-x-auto px-[18px] pb-2 pt-[18px]">
-          {viewColumns.map((column) => (
-            <ColumnView
-              key={column.id}
-              column={column}
-              dndEnabled={dndEnabled}
-              onOpenTicket={(t) => setTicketModal({ open: true, ticket: t, columnId: t.columnId })}
-              onAddTicket={(columnId) => setTicketModal({ open: true, ticket: null, columnId })}
-              onRemove={removeColumn}
-            />
-          ))}
+          <SortableContext
+            items={viewColumns.map((c) => `column-${c.id}`)}
+            strategy={horizontalListSortingStrategy}
+          >
+            {viewColumns.map((column) => (
+              <ColumnView
+                key={column.id}
+                column={column}
+                dndEnabled={dndEnabled}
+                onOpenTicket={(t) => setTicketModal({ open: true, ticket: t, columnId: t.columnId })}
+                onAddTicket={(columnId) => setTicketModal({ open: true, ticket: null, columnId })}
+                onRemove={removeColumn}
+              />
+            ))}
+          </SortableContext>
 
           {/* add column */}
           <section className="w-[268px] flex-none">
@@ -268,7 +315,7 @@ export default function Board(props) {
           {activeTicket ? <TicketCardView ticket={activeTicket} overlay /> : null}
         </DragOverlay>
 
-        <ArchiveDropzone active={Boolean(activeId)} />
+        <ArchiveDropzone active={Boolean(activeId) && activeType === "ticket"} />
       </DndContext>
 
       <TicketModal

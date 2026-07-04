@@ -11,6 +11,32 @@ class ColumnsController < ApplicationController
     end
   end
 
+  def update
+    column = Column.find(params[:id])
+
+    if column.update(name: params[:name])
+      redirect_to board_path(column.project), notice: "Column renamed"
+    else
+      redirect_to board_path(column.project), inertia: { errors: column.errors }
+    end
+  end
+
+  # Persist a column drag: the full ordered list of column ids. Positions are
+  # renumbered from the array (gap-free). Tickets ride along automatically — they
+  # belong to their column, so only Column#position changes here.
+  def reorder
+    project = Project.find(params[:project_id])
+    ordered_ids = Array(params[:ordered_ids]).map(&:to_i)
+
+    Column.transaction do
+      ordered_ids.each_with_index do |id, index|
+        project.columns.where(id: id).update_all(position: index + 1)
+      end
+    end
+
+    redirect_to board_path(project)
+  end
+
   def destroy
     column = Column.find(params[:id])
     project = column.project
