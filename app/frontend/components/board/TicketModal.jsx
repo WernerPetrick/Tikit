@@ -6,8 +6,8 @@ const EMPTY = { title: "", description: "", category: "feature", assignee_id: ""
 
 export default function TicketModal({
   open,
-  ticket, // null => create
-  columnId, // target column for create
+  ticket, 
+  columnId,
   projectId,
   team,
   categories,
@@ -53,9 +53,9 @@ export default function TicketModal({
     if (editing) {
       form.patch(`/tickets/${ticket.id}`, { onSuccess: onClose });
     } else {
-      form.transform((d) => ({ ...d, project_id: projectId, column_id: columnId })).post("/tickets", {
-        onSuccess: onClose,
-      });
+      // useForm#transform is not chainable in @inertiajs/react — call it, then post.
+      form.transform((d) => ({ ...d, project_id: projectId, column_id: columnId }));
+      form.post("/tickets", { onSuccess: onClose });
     }
   };
 

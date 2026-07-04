@@ -230,18 +230,22 @@ simpler path.
 
 **Web service** (Environment: Ruby):
 
-- **Build command:**
+- **Build command** — runs migrations here so it works on every plan (`DATABASE_URL`
+  is available at build time). Use `db:migrate`, **not** `db:prepare`, so production is
+  not seeded with the demo board/users:
   ```bash
-  bundle install && npm ci && bundle exec rails assets:precompile
-  ```
-- **Pre-deploy / release command** (runs migrations safely on each deploy):
-  ```bash
-  bundle exec rails db:prepare
+  bundle install && npm ci && bundle exec rails assets:precompile && bundle exec rails db:migrate
   ```
 - **Start command:**
   ```bash
   bundle exec puma -C config/puma.rb
   ```
+
+> On **paid** plans you can instead move `bundle exec rails db:migrate` to a **Pre-Deploy
+> Command** (better for zero-downtime) or run it once from the **Shell** tab. Those two
+> options are **not available on the free tier** — that's why a migration step placed in a
+> pre-deploy command silently never runs there, leaving you with `relation "users" does
+> not exist`. Keeping it in the build command avoids that trap.
 
 **Background worker** (Environment: Ruby, no HTTP port) — required so jobs actually run:
 
@@ -277,8 +281,7 @@ services:
     name: tikit-web
     runtime: ruby
     plan: starter
-    buildCommand: bundle install && npm ci && bundle exec rails assets:precompile
-    preDeployCommand: bundle exec rails db:prepare
+    buildCommand: bundle install && npm ci && bundle exec rails assets:precompile && bundle exec rails db:migrate
     startCommand: bundle exec puma -C config/puma.rb
     envVars:
       - key: RAILS_ENV
