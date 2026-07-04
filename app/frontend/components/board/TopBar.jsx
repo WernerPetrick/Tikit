@@ -50,7 +50,7 @@ export default function TopBar({
         className="rounded-[8px] px-2.5 py-1.5 text-[12.5px] font-semibold text-[#7E8AA3] hover:bg-white/[0.05] hover:text-[#EAEEF7]"
         title="Pull requests with no linked ticket"
       >
-        PRs
+        Pull Requests
         {unlinkedPrCount > 0 && (
           <span className="ml-1.5 rounded-full bg-[#FF9A2E]/20 px-[7px] py-px font-mono text-[11px] text-[#FF9A2E]">
             {unlinkedPrCount}
